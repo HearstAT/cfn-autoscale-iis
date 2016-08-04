@@ -66,86 +66,328 @@
             "ConstraintDescription": "must be a valid EC2 instance type."
         }
     },
-   "Mappings" : {
-     "AWSInstanceType2Arch" : {
-       "t2.micro"    : { "Arch" : "HVM64"  },
-       "t2.small"    : { "Arch" : "HVM64"  },
-       "t2.medium"   : { "Arch" : "HVM64"  },
-       "t2.large"    : { "Arch" : "HVM64"  },
-       "m1.small"    : { "Arch" : "HVM64"  },
-       "m1.medium"   : { "Arch" : "HVM64"  },
-       "m1.large"    : { "Arch" : "HVM64"  },
-       "m1.xlarge"   : { "Arch" : "HVM64"  },
-       "m2.xlarge"   : { "Arch" : "HVM64"  },
-       "m2.2xlarge"  : { "Arch" : "HVM64"  },
-       "m2.4xlarge"  : { "Arch" : "HVM64"  },
-       "m3.medium"   : { "Arch" : "HVM64"  },
-       "m3.large"    : { "Arch" : "HVM64"  },
-       "m3.xlarge"   : { "Arch" : "HVM64"  },
-       "m3.2xlarge"  : { "Arch" : "HVM64"  },
-       "m4.large"    : { "Arch" : "HVM64"  },
-       "m4.xlarge"   : { "Arch" : "HVM64"  },
-       "m4.2xlarge"  : { "Arch" : "HVM64"  },
-       "m4.4xlarge"  : { "Arch" : "HVM64"  },
-       "m4.10xlarge" : { "Arch" : "HVM64"  },
-       "c1.medium"   : { "Arch" : "HVM64"  },
-       "c1.xlarge"   : { "Arch" : "HVM64"  },
-       "c3.large"    : { "Arch" : "HVM64"  },
-       "c3.xlarge"   : { "Arch" : "HVM64"  },
-       "c3.2xlarge"  : { "Arch" : "HVM64"  },
-       "c3.4xlarge"  : { "Arch" : "HVM64"  },
-       "c3.8xlarge"  : { "Arch" : "HVM64"  },
-       "c4.large"    : { "Arch" : "HVM64"  },
-       "c4.xlarge"   : { "Arch" : "HVM64"  },
-       "c4.2xlarge"  : { "Arch" : "HVM64"  },
-       "c4.4xlarge"  : { "Arch" : "HVM64"  },
-       "c4.8xlarge"  : { "Arch" : "HVM64"  },
-       "g2.2xlarge"  : { "Arch" : "HVM64"  },
-       "g2.8xlarge"  : { "Arch" : "HVM64"  },
-       "r3.large"    : { "Arch" : "HVM64"  },
-       "r3.xlarge"   : { "Arch" : "HVM64"  },
-       "r3.2xlarge"  : { "Arch" : "HVM64"  },
-       "r3.4xlarge"  : { "Arch" : "HVM64"  },
-       "r3.8xlarge"  : { "Arch" : "HVM64"  },
-       "i2.xlarge"   : { "Arch" : "HVM64"  },
-       "i2.2xlarge"  : { "Arch" : "HVM64"  },
-       "i2.4xlarge"  : { "Arch" : "HVM64"  },
-       "i2.8xlarge"  : { "Arch" : "HVM64"  },
-       "d2.xlarge"   : { "Arch" : "HVM64"  },
-       "d2.2xlarge"  : { "Arch" : "HVM64"  },
-       "d2.4xlarge"  : { "Arch" : "HVM64"  },
-       "d2.8xlarge"  : { "Arch" : "HVM64"  },
-       "hi1.4xlarge" : { "Arch" : "HVM64"  },
-       "hs1.8xlarge" : { "Arch" : "HVM64"  },
-       "cr1.8xlarge" : { "Arch" : "HVM64"  },
-       "cc2.8xlarge" : { "Arch" : "HVM64"  }
-       },
-       "AWSRegionArch2AMI": {
-        "us-east-1"       : { "HVM64": "ami-74a73263" },
-        "us-west-2"       : { "HVM64": "ami-2426e944" },
-        "us-west-1"       : { "HVM64": "ami-6d0b4b0d" },
-        "eu-west-1"       : { "HVM64": "ami-6fd5b81c" },
-        "eu-central-1"    : { "HVM64": "ami-3f649050" },
-        "ap-northeast-1"  : { "HVM64": "ami-760ff517" },
-        "ap-northeast-2"  : { "HVM64": "ami-f3f13b9d" },
-        "ap-southeast-1"  : { "HVM64": "ami-eceb348f" },
-        "ap-southeast-2"  : { "HVM64": "ami-0b497c68" },
-        "sa-east-1"       : { "HVM64": "ami-f1be299d" }
-      }
-  },
-  "Resources": {
-  "NodeWaitHandle" : {
-   "Type" : "AWS::CloudFormation::WaitConditionHandle"
-  },
-  "WaitCondition" : {
-   "Type" : "AWS::CloudFormation::WaitCondition",
-   "DependsOn" : "WindowsScaleGroup",
-   "Properties" : {
-       "Handle" : { "Ref" : "NodeWaitHandle" },
-       "Timeout" : "600"
-     }
-  }
-},
-  "Outputs": {
-  }
+    "Mappings" : {
+        "AWSInstanceType2Arch" : {
+            "t2.micro"    : { "Arch" : "HVM64"  },
+            "t2.small"    : { "Arch" : "HVM64"  },
+            "t2.medium"   : { "Arch" : "HVM64"  },
+            "t2.large"    : { "Arch" : "HVM64"  },
+            "m1.small"    : { "Arch" : "HVM64"  },
+            "m1.medium"   : { "Arch" : "HVM64"  },
+            "m1.large"    : { "Arch" : "HVM64"  },
+            "m1.xlarge"   : { "Arch" : "HVM64"  },
+            "m2.xlarge"   : { "Arch" : "HVM64"  },
+            "m2.2xlarge"  : { "Arch" : "HVM64"  },
+            "m2.4xlarge"  : { "Arch" : "HVM64"  },
+            "m3.medium"   : { "Arch" : "HVM64"  },
+            "m3.large"    : { "Arch" : "HVM64"  },
+            "m3.xlarge"   : { "Arch" : "HVM64"  },
+            "m3.2xlarge"  : { "Arch" : "HVM64"  },
+            "m4.large"    : { "Arch" : "HVM64"  },
+            "m4.xlarge"   : { "Arch" : "HVM64"  },
+            "m4.2xlarge"  : { "Arch" : "HVM64"  },
+            "m4.4xlarge"  : { "Arch" : "HVM64"  },
+            "m4.10xlarge" : { "Arch" : "HVM64"  },
+            "c1.medium"   : { "Arch" : "HVM64"  },
+            "c1.xlarge"   : { "Arch" : "HVM64"  },
+            "c3.large"    : { "Arch" : "HVM64"  },
+            "c3.xlarge"   : { "Arch" : "HVM64"  },
+            "c3.2xlarge"  : { "Arch" : "HVM64"  },
+            "c3.4xlarge"  : { "Arch" : "HVM64"  },
+            "c3.8xlarge"  : { "Arch" : "HVM64"  },
+            "c4.large"    : { "Arch" : "HVM64"  },
+            "c4.xlarge"   : { "Arch" : "HVM64"  },
+            "c4.2xlarge"  : { "Arch" : "HVM64"  },
+            "c4.4xlarge"  : { "Arch" : "HVM64"  },
+            "c4.8xlarge"  : { "Arch" : "HVM64"  },
+            "g2.2xlarge"  : { "Arch" : "HVM64"  },
+            "g2.8xlarge"  : { "Arch" : "HVM64"  },
+            "r3.large"    : { "Arch" : "HVM64"  },
+            "r3.xlarge"   : { "Arch" : "HVM64"  },
+            "r3.2xlarge"  : { "Arch" : "HVM64"  },
+            "r3.4xlarge"  : { "Arch" : "HVM64"  },
+            "r3.8xlarge"  : { "Arch" : "HVM64"  },
+            "i2.xlarge"   : { "Arch" : "HVM64"  },
+            "i2.2xlarge"  : { "Arch" : "HVM64"  },
+            "i2.4xlarge"  : { "Arch" : "HVM64"  },
+            "i2.8xlarge"  : { "Arch" : "HVM64"  },
+            "d2.xlarge"   : { "Arch" : "HVM64"  },
+            "d2.2xlarge"  : { "Arch" : "HVM64"  },
+            "d2.4xlarge"  : { "Arch" : "HVM64"  },
+            "d2.8xlarge"  : { "Arch" : "HVM64"  },
+            "hi1.4xlarge" : { "Arch" : "HVM64"  },
+            "hs1.8xlarge" : { "Arch" : "HVM64"  },
+            "cr1.8xlarge" : { "Arch" : "HVM64"  },
+            "cc2.8xlarge" : { "Arch" : "HVM64"  }
+        },
+        "AWSRegionArch2AMI": {
+            "us-east-1"       : { "HVM64": "ami-74a73263" },
+            "us-west-2"       : { "HVM64": "ami-2426e944" },
+            "us-west-1"       : { "HVM64": "ami-6d0b4b0d" },
+            "eu-west-1"       : { "HVM64": "ami-6fd5b81c" },
+            "eu-central-1"    : { "HVM64": "ami-3f649050" },
+            "ap-northeast-1"  : { "HVM64": "ami-760ff517" },
+            "ap-northeast-2"  : { "HVM64": "ami-f3f13b9d" },
+            "ap-southeast-1"  : { "HVM64": "ami-eceb348f" },
+            "ap-southeast-2"  : { "HVM64": "ami-0b497c68" },
+            "sa-east-1"       : { "HVM64": "ami-f1be299d" }
+        }
+    },
+    "Resources": {
+        "SecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Enable Access From Elastic Load Balancer.",
+                "SecurityGroupIngress" : [
+                    {
+                        "IpProtocol" : "tcp",
+                        "FromPort"   : "443",
+                        "ToPort"     : "443",
+                        "SourceSecurityGroupOwnerId" : {
+                            "Fn::GetAtt" : [
+                                "LoadBalancer",
+                                "SourceSecurityGroup.OwnerAlias"
+                            ]
+                        },
+                        "SourceSecurityGroupName"    : {
+                            "Fn::GetAtt" : [
+                                "LoadBalancer",
+                                "SourceSecurityGroup.GroupName"
+                            ]
+                        }
+                    },
+                    {
+                        "IpProtocol" : "tcp",
+                        "FromPort"   : "80",
+                        "ToPort"     : "80",
+                        "SourceSecurityGroupOwnerId" : {
+                            "Fn::GetAtt" : [
+                                "LoadBalancer",
+                                "SourceSecurityGroup.OwnerAlias"
+                            ]
+                        },
+                        "SourceSecurityGroupName"    : {
+                            "Fn::GetAtt" : [
+                                "LoadBalancer",
+                                "SourceSecurityGroup.GroupName"
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "LoadBalancer"  : {
+            "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties" : {
+                "Listeners" : [
+                    {
+                        "InstancePort" : "443",
+                        "InstanceProtocol" : "HTTPS",
+                        "LoadBalancerPort" : "443",
+                        "Protocol"         : "HTTPS",
+                        "SSLCertificateId" : "arn:aws:iam::123456789101:server-certificate/example"
+                    }
+                ],
+                "AvailabilityZones" : {
+                    "Fn::GetAZs" : ""
+                },
+                "HealthCheck"       : {
+                    "HealthyThreshold" : "3",
+                    "Interval"         : "30",
+                    "Target"           : "HTTP:80/index.html",
+                    "Timeout"          : 8,
+                    "UnhealthyThreshold" : "2"
+                }
+            }
+        },
+        "AutoScaleLaunchConfiguration" : {
+            "Type" : "AWS::AutoScaling::LaunchConfiguration",
+            "Metadata" : {
+                "AWS::CloudFormation::Init" : {
+                    "config" : {
+                        "sources" : {
+                            "C:\\inetpub\\wwwroot" : "",
+                        "commands" : {
+                            "1-set-appPool-identity" : {
+                                "command" : "C:\\Windows\\System32\\inetsrv\\appcmd set config /section:applicationPools /[name='DefaultAppPool'].processModel.identityType:LocalSystem",
+                                "waitAfterCompletion" : "0"
+                            },
+                            "2-add-http-binding"     : {
+                                "command" : "C:\\Windows\\System32\\inetsrv\\appcmd set site /site.name:\"Default Web Site\" /+bindings.[protocol='http',bindingInformation='*:80:']",
+                                "waitAfterCompletion" : "0"
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties" : {
+                "KeyName" : {
+                    "Ref" : "KeyName"
+                },
+                "ImageId" : {
+                    "Fn::FindInMap" : [
+                        "RegionToAMIMap",
+                        {
+                            "Ref" : "AWS::Region"
+                        },
+                        "AMI"
+                    ]
+                },
+                "IamInstanceProfile" : {
+                    "Ref" : "IamInstanceProfile"
+                },
+                "SecurityGroups"     : [
+                    {
+                        "Ref" : "SecurityGroup"
+                    }
+                ],
+                "InstanceType"       : {
+                    "Ref" : "InstanceType"
+                },
+                "UserData"           : {
+                    "Fn::Base64" : {
+                        "Fn::Join" : [
+                            "",
+                            [
+                                "<script>\n",
+                                "\"C:\\Program Files (x86)\\Amazon\\cfn-bootstrap\\cfn-init.exe\" -v -s ",
+                                {
+                                    "Ref" : "AWS::StackName"
+                                },
+                                " -r AutoScaleLaunchConfiguration ",
+                                " --access-key ",
+                                "put curl to metadata here or set default to profile",
+                                " --secret-key ",
+                                "put curl to metadata here or set default to profile",
+                                "\n",
+                                "</script>"
+                            ]
+                        ]
+                    }
+                }
+            }
+        },
+        "AutoScaleGroup" : {
+            "Type" : "AWS::AutoScaling::AutoScalingGroup",
+            "Properties" : {
+                "AvailabilityZones" : { "Fn::GetAZs" : ""},
+                "HealthCheckGracePeriod" : "120",
+                "HealthCheckType"        : "EC2",
+                "LaunchConfigurationName" : { "Ref" : "AutoScaleLaunchConfiguration" },
+                "MinSize" : "2",
+                "MaxSize" : "3",
+                "DesiredCapacity" : "1",
+                "LoadBalancerNames" : [ { "Ref" : "LoadBalancer" } ],
+                "Tags" : [{ "Key" : "Name", "Value" : "IIS-Windows-Scale-Group", "PropagateAtLaunch":"true" }]
+            }
+        },
+        "AutoScaleScaleUpPolicy" : {
+            "Type" : "AWS::AutoScaling::ScalingPolicy",
+            "Properties" : {
+                "AdjustmentType" : "PercentChangeInCapacity",
+                "AutoScalingGroupName" : {
+                    "Ref" : "AutoScaleGroup"
+                },
+                "Cooldown"             : "420",
+                "ScalingAdjustment"    : "200"
+            }
+        },
+        "AutoScaleScaleDownPolicy" : {
+            "Type" : "AWS::AutoScaling::ScalingPolicy",
+            "Properties" : {
+                "AdjustmentType" : "ChangeInCapacity",
+                "AutoScalingGroupName" : {
+                    "Ref" : "AutoScaleGroup"
+                },
+                "Cooldown"             : "60",
+                "ScalingAdjustment"    : "-1"
+            }
+        },
+        "AutoScaleScaleUpAlarm" : {
+            "Type" : "AWS::CloudWatch::Alarm",
+            "Properties" : {
+                "MetricName" : "CPUUtilization",
+                "Namespace"  : "AWS/EC2",
+                "Statistic"  : "Average",
+                "Period"     : "60",
+                "EvaluationPeriods" : "1",
+                "Threshold"         : "75",
+                "AlarmActions"      : [
+                    {
+                        "Ref" : "AutoScaleScaleUpPolicy"
+                    }
+                ],
+                "Dimensions"        : [
+                    {
+                        "Name" : "AutoScalingGroupName",
+                        "Value" : {
+                            "Ref" : "AutoScaleGroup"
+                        }
+                    }
+                ],
+                "ComparisonOperator" : "GreaterThanThreshold"
+            }
+        },
+        "AutoScaleScaleDownAlarm"          : {
+            "Type" : "AWS::CloudWatch::Alarm",
+            "Properties" : {
+                "MetricName" : "CPUUtilization",
+                "Namespace"  : "AWS/EC2",
+                "Statistic"  : "Average",
+                "Period"     : "60",
+                "EvaluationPeriods" : "2",
+                "Threshold"         : "50",
+                "AlarmActions"      : [
+                    {
+                        "Ref" : "AutoScaleScaleDownPolicy"
+                    }
+                ],
+                "Dimensions"        : [
+                    {
+                        "Name" : "AutoScalingGroupName",
+                        "Value" : {
+                            "Ref" : "AutoScaleGroup"
+                        }
+                    }
+                ],
+                "ComparisonOperator" : "LessThanThreshold"
+            }
+        },
+        "DNSRecord"                        : {
+            "Type" : "AWS::Route53::RecordSet",
+            "Properties" : {
+                "HostedZoneName" : {
+                    "Ref" : "DNSHostedZone"
+                },
+                "Comment"        : "VPN Host. Created by Cloud Formation.",
+                "Name"           : {
+                    "Fn::Join" : [
+                        ".",
+                        [
+                            {
+                                "Ref" : "DNSSubDomain"
+                            },
+                            {
+                                "Ref" : "DNSHostedZone"
+                            }
+                        ]
+                    ]
+                },
+                "Type"           : "CNAME",
+                "TTL"            : "150",
+                "ResourceRecords" : [
+                    {
+                        "Fn::GetAtt" : [
+                            "LoadBalancer",
+                            "CanonicalHostedZoneName"
+                        ]
+                    }
+                ]
+            },
+            "DependsOn"  : "LoadBalancer"
+        }
+    },
+    "Outputs": {
+    }
+}
 }
