@@ -209,7 +209,7 @@
                 "MinSize" : "1",
                 "MaxSize" : "2",
                 "DesiredCapacity" : "1",
-                "LoadBalancerNames" : { "Ref" : "ElasticLoadBalancer" },
+                "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
                 "Tags" : [{ "Key" : "Name", "Value" : "Widnows-Scale-Group", "PropagateAtLaunch":"true" }]
             }
         }
