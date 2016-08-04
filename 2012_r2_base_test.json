@@ -162,7 +162,7 @@
                 ]
             }
         },
-        "PrimaryElasticLoadBalancer" : {
+        "ElasticLoadBalancer" : {
             "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
             "Properties" : {
                 "Subnets" : [ { "Ref" : "SubnetA" },{ "Ref" : "SubnetB" },{ "Ref" : "SubnetC" } ],
@@ -214,7 +214,7 @@
                 "MinSize" : "1",
                 "MaxSize" : "2",
                 "DesiredCapacity" : "1",
-                "LoadBalancerNames" : { "Ref" : "PrimaryElasticLoadBalancer" },
+                "LoadBalancerNames" : { "Ref" : "ElasticLoadBalancer" },
                 "Tags" : [{ "Key" : "Name", "Value" : "Widnows-Scale-Group", "PropagateAtLaunch":"true" }]
             }
         }
