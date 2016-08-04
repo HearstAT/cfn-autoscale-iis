@@ -17,11 +17,6 @@
             "Type" : "AWS::EC2::VPC::Id",
             "Default": ""
         },
-        "UserDataScript": {
-            "Description" : "Enter URL for User Data script",
-            "Type": "String",
-            "Default": ""
-        },
         "SubnetA": {
             "Description" : "Choose Availability Zone to use",
             "Type" : "AWS::EC2::Subnet::Id",
@@ -177,8 +172,8 @@
                     {
                         "InstancePort": "80",
                         "LoadBalancerPort": "80",
-                        "InstanceProtocol": "HTTPS",
-                        "Protocol": "HTTPS",
+                        "InstanceProtocol": "HTTP",
+                        "Protocol": "HTTP",
                         "PolicyNames" : [ "PublicELBCookieStickinessPolicy" ]
                     }
                 ],
