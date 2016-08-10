@@ -155,6 +155,56 @@
         }
     },
     "Resources": {
+        "InstanceRole":{
+            "Type":"AWS::IAM::Role",
+            "Properties":{
+                "AssumeRolePolicyDocument":{
+                    "Statement":[
+                        {
+                            "Effect":"Allow",
+                            "Principal":{
+                                "Service":[
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action":[
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path":"/"
+            }
+        },
+        "RolePolicies":{
+            "Type":"AWS::IAM::Policy",
+            "Properties":{
+                "PolicyName":"S3Download",
+                "PolicyDocument":{
+                    "Statement":[
+                        {
+                            "Action":[
+                                "s3:GetObject"
+                            ],
+                            "Effect":"Allow",
+                            "Resource": { "Fn::Join" : ["", [ "arn:aws:s3:::", { "Ref": "S3Bucket" }, "/", { "Ref": "UserDataPowerShell" } ]]}
+                        }
+                    ]
+                },
+                "Roles":[
+                    { "Ref":"InstanceRole" }
+                ]
+            }
+        },
+        "InstanceProfile":{
+         "Type":"AWS::IAM::InstanceProfile",
+         "Properties":{
+            "Path":"/",
+            "Roles":[
+               { "Ref":"InstanceRole" }
+            ]
+         }
+        },
         "LoadBalancerSecurityGroup" : {
             "Type" : "AWS::EC2::SecurityGroup",
             "Properties" : {
@@ -203,6 +253,12 @@
         "AutoScaleLaunchConfiguration" : {
             "Type" : "AWS::AutoScaling::LaunchConfiguration",
             "Metadata" : {
+                "AWS::CloudFormation::Authentication":{
+                    "S3AccessCreds":{
+                        "type":"S3",
+                        "roleName":{ "Ref":"InstanceRole" }
+                    }
+                },
                 "AWS::CloudFormation::Init" : {
                     "config" : {
                         "files" : {
@@ -222,6 +278,13 @@
                                     " -r AutoScaleLaunchConfiguration",
                                     " --region ", { "Ref" : "AWS::Region" }, "\n"
                                 ]]}
+                            },
+                            "c:\\user-init\\userdata.ps1":{
+                                "source": { "Fn::Join" : ["", [ "http://", { "Ref": "S3Bucket" }, ".s3.amazonaws.com/", { "Ref": "UserDataPowerShell" } ]]},
+                                "mode":"000777",
+                                "owner":"root",
+                                "group":"root",
+                                "authentication":"S3AccessCreds"
                             }
                         }
                     },
@@ -241,7 +304,7 @@
                         "3-run-userdata" : {
                             "command" : { "Fn::Join" : [ "", [
                                 "@powershell -NoProfile -ExecutionPolicy Bypass -Command ",
-                                "Install-WindowsFeature -Name Web-Server"
+                                "C:\\user-init\\userdata.ps1\""
                                 ]]}
                         },
                         "4-cfn-signal" : {
@@ -263,6 +326,7 @@
             },
             "Properties" : {
                 "KeyName" : { "Ref" : "KeyName" },
+                "IamInstanceProfile":{ "Ref":"InstanceProfile" },
                 "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
                             { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "InstanceType" }, "Arch" ] } ] },
                 "AssociatePublicIpAddress" : "true",
