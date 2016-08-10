@@ -7,8 +7,8 @@
             "Type" : "AWS::EC2::KeyPair::KeyName",
             "Default": ""
         },
-        "SSHSecurityGroup" : {
-            "Description" : "Select Security Group for SSH Access",
+        "RDPSecurityGroup" : {
+            "Description" : "Select Security Group for RDP Access",
             "Type": "AWS::EC2::SecurityGroup::Id",
             "Default": ""
         },
@@ -17,11 +17,32 @@
             "Type" : "AWS::EC2::VPC::Id",
             "Default": ""
         },
-        "UserDataScript": {
-            "Description" : "Enter URL for User Data script",
+        "SubnetA": {
+            "Description" : "Choose Availability Zone to use",
+            "Type" : "AWS::EC2::Subnet::Id",
+            "Default": ""
+        },
+        "SubnetB": {
+            "Description" : "Choose Availability Zone to use",
+            "Type" : "AWS::EC2::Subnet::Id",
+            "Default": ""
+        },
+        "SubnetC": {
+            "Description" : "Choose Availability Zone to use",
+            "Type" : "AWS::EC2::Subnet::Id",
+            "Default": ""
+        },
+        "S3Bucket": {
+            "Description" : "S3 Bucket Name and/or Path",
             "Type": "String",
             "Default": ""
         },
+        "UserDataPowerShell": {
+            "Description" : "Enter Powershell script name",
+            "Type": "String",
+            "Default": ""
+        },
+
         "InstanceType": {
             "Type": "String",
             "Default": "t2.micro",
@@ -134,260 +155,217 @@
         }
     },
     "Resources": {
-        "SecurityGroup" : {
-            "Type" : "AWS::EC2::SecurityGroup",
-            "Properties" : {
-                "GroupDescription" : "Enable Access From Elastic Load Balancer.",
-                "SecurityGroupIngress" : [
-                    {
-                        "IpProtocol" : "tcp",
-                        "FromPort"   : "443",
-                        "ToPort"     : "443",
-                        "SourceSecurityGroupOwnerId" : {
-                            "Fn::GetAtt" : [
-                                "LoadBalancer",
-                                "SourceSecurityGroup.OwnerAlias"
-                            ]
-                        },
-                        "SourceSecurityGroupName"    : {
-                            "Fn::GetAtt" : [
-                                "LoadBalancer",
-                                "SourceSecurityGroup.GroupName"
+        "InstanceRole":{
+            "Type":"AWS::IAM::Role",
+            "Properties":{
+                "AssumeRolePolicyDocument":{
+                    "Statement":[
+                        {
+                            "Effect":"Allow",
+                            "Principal":{
+                                "Service":[
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action":[
+                                "sts:AssumeRole"
                             ]
                         }
-                    },
-                    {
-                        "IpProtocol" : "tcp",
-                        "FromPort"   : "80",
-                        "ToPort"     : "80",
-                        "SourceSecurityGroupOwnerId" : {
-                            "Fn::GetAtt" : [
-                                "LoadBalancer",
-                                "SourceSecurityGroup.OwnerAlias"
-                            ]
-                        },
-                        "SourceSecurityGroupName"    : {
-                            "Fn::GetAtt" : [
-                                "LoadBalancer",
-                                "SourceSecurityGroup.GroupName"
-                            ]
+                    ]
+                },
+                "Path":"/"
+            }
+        },
+        "RolePolicies":{
+            "Type":"AWS::IAM::Policy",
+            "Properties":{
+                "PolicyName":"S3Download",
+                "PolicyDocument":{
+                    "Statement":[
+                        {
+                            "Action":[
+                                "s3:GetObject"
+                            ],
+                            "Effect":"Allow",
+                            "Resource": { "Fn::Join" : ["", [ "arn:aws:s3:::", { "Ref": "S3Bucket" }, "/", { "Ref": "UserDataPowerShell" } ]]}
                         }
-                    }
+                    ]
+                },
+                "Roles":[
+                    { "Ref":"InstanceRole" }
                 ]
             }
         },
-        "LoadBalancer"  : {
+        "InstanceProfile":{
+         "Type":"AWS::IAM::InstanceProfile",
+         "Properties":{
+            "Path":"/",
+            "Roles":[
+               { "Ref":"InstanceRole" }
+            ]
+         }
+        },
+        "LoadBalancerSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Setup Ingress/Egress for Windows Load Balancer",
+                "VpcId" : { "Ref" : "VPC" },
+                "SecurityGroupIngress" : [ { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" },
+                                           { "IpProtocol" : "tcp", "FromPort" : "443", "ToPort" : "443", "CidrIp" : "0.0.0.0/0" } ],
+                "SecurityGroupEgress" : [ { "IpProtocol" : "tcp", "FromPort" : "0",  "ToPort" : "65535",  "CidrIp" : "0.0.0.0/0" } ],
+                "Tags" : [
+                    { "Key" : "Name", "Value" : "Windows-ELB-SecurityGroup" }
+                ]
+            }
+        },
+        "ElasticLoadBalancer" : {
             "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
             "Properties" : {
-                "Listeners" : [
+                "Subnets" : [ { "Ref" : "SubnetA" },{ "Ref" : "SubnetB" },{ "Ref" : "SubnetC" } ],
+                "SecurityGroups" : [ { "Ref" : "LoadBalancerSecurityGroup" } ],
+                "LBCookieStickinessPolicy" : [
                     {
-                        "InstancePort" : "443",
-                        "InstanceProtocol" : "HTTPS",
-                        "LoadBalancerPort" : "443",
-                        "Protocol"         : "HTTPS",
-                        "SSLCertificateId" : "arn:aws:iam::123456789101:server-certificate/example"
+                        "PolicyName" : "PublicELBCookieStickinessPolicy",
+                        "CookieExpirationPeriod" : "3600"
                     }
                 ],
-                "AvailabilityZones" : {
-                    "Fn::GetAZs" : ""
+                "Listeners" : [
+                    {
+                        "InstancePort": "80",
+                        "LoadBalancerPort": "80",
+                        "InstanceProtocol": "HTTP",
+                        "Protocol": "HTTP",
+                        "PolicyNames" : [ "PublicELBCookieStickinessPolicy" ]
+                    }
+                ],
+                "HealthCheck" : {
+                    "Target" : "HTTP:80/index.html",
+                    "HealthyThreshold" : "2",
+                    "UnhealthyThreshold" : "10",
+                    "Interval" : "90",
+                    "Timeout" : "60"
                 },
-                "HealthCheck"       : {
-                    "HealthyThreshold" : "3",
-                    "Interval"         : "30",
-                    "Target"           : "HTTP:80/index.html",
-                    "Timeout"          : 8,
-                    "UnhealthyThreshold" : "2"
-                }
+                "Tags" : [
+                    { "Key" : "Name", "Value" : "Windows-ELB" }
+                ]
             }
         },
         "AutoScaleLaunchConfiguration" : {
             "Type" : "AWS::AutoScaling::LaunchConfiguration",
             "Metadata" : {
+                "AWS::CloudFormation::Authentication":{
+                    "S3AccessCreds":{
+                        "type":"S3",
+                        "roleName":{ "Ref":"InstanceRole" }
+                    }
+                },
                 "AWS::CloudFormation::Init" : {
                     "config" : {
-                        "sources" : {
-                            "C:\\inetpub\\wwwroot" : "",
-                        "commands" : {
-                            "1-set-appPool-identity" : {
-                                "command" : "C:\\Windows\\System32\\inetsrv\\appcmd set config /section:applicationPools /[name='DefaultAppPool'].processModel.identityType:LocalSystem",
-                                "waitAfterCompletion" : "0"
+                        "files" : {
+                            "c:\\cfn\\cfn-hup.conf" : {
+                                "content" : { "Fn::Join" : ["", [
+                                    "[main]\n",
+                                    "stack=", { "Ref" : "AWS::StackId" }, "\n",
+                                    "region=", { "Ref" : "AWS::Region" }, "\n"
+                                ]]}
                             },
-                            "2-add-http-binding"     : {
-                                "command" : "C:\\Windows\\System32\\inetsrv\\appcmd set site /site.name:\"Default Web Site\" /+bindings.[protocol='http',bindingInformation='*:80:']",
-                                "waitAfterCompletion" : "0"
+                            "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf" : {
+                                "content": { "Fn::Join" : ["", [
+                                    "[cfn-auto-reloader-hook]\n",
+                                    "triggers=post.update\n",
+                                    "path=Resources.JenkinsWindowsInstance.Metadata.AWS::CloudFormation::Init\n",
+                                    "action=cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" },
+                                    " -r AutoScaleLaunchConfiguration",
+                                    " --region ", { "Ref" : "AWS::Region" }, "\n"
+                                ]]}
+                            },
+                            "c:\\user-init\\userdata.ps1":{
+                                "source": { "Fn::Join" : ["", [ "http://", { "Ref": "S3Bucket" }, ".s3.amazonaws.com/", { "Ref": "UserDataPowerShell" } ]]},
+                                "mode":"000777",
+                                "owner":"root",
+                                "group":"root",
+                                "authentication":"S3AccessCreds"
+                            }
+                        }
+                    },
+                    "commands" : {
+                        "1-install-chocolately" : {
+                            "command" : { "Fn::Join" : [ "", [
+                                "@powershell -NoProfile -ExecutionPolicy Bypass -Command ",
+                                "\"iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex\" && SET PATH=%PATH%;%ALLUSERSPROFILE%\\chocolatey\\bin"
+                                ]]}
+                        },
+                        "2-install-acme" : {
+                            "command" : { "Fn::Join" : [ "", [
+                                "@powershell -NoProfile -ExecutionPolicy Bypass -Command ",
+                                "\"C:\\ProgramData\\chocolatey\\bin\\choco.exe install -y acmesharp-posh-all\""
+                                ]]}
+                        },
+                        "3-run-userdata" : {
+                            "command" : { "Fn::Join" : [ "", [
+                                "@powershell -NoProfile -ExecutionPolicy Bypass -Command ",
+                                "C:\\user-init\\userdata.ps1\""
+                                ]]}
+                        },
+                        "4-cfn-signal" : {
+                            "command" : { "Fn::Join" : [ "", [
+                                "cfn-signal.exe -e %ERRORLEVEL% ", { "Fn::Base64" : { "Ref" : "WindowsServerWaitHandle" } } ," "
+                                ]]}
+                        }
+                    },
+                    "services" : {
+                        "windows" : {
+                            "cfn-hup" : {
+                                "enabled" : "true",
+                                "ensureRunning" : "true",
+                                "files" : ["c:\\cfn\\cfn-hup.conf", "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"]
                             }
                         }
                     }
                 }
             },
             "Properties" : {
-                "KeyName" : {
-                    "Ref" : "KeyName"
-                },
-                "ImageId" : {
-                    "Fn::FindInMap" : [
-                        "RegionToAMIMap",
-                        {
-                            "Ref" : "AWS::Region"
-                        },
-                        "AMI"
-                    ]
-                },
-                "IamInstanceProfile" : {
-                    "Ref" : "IamInstanceProfile"
-                },
-                "SecurityGroups"     : [
-                    {
-                        "Ref" : "SecurityGroup"
-                    }
-                ],
-                "InstanceType"       : {
-                    "Ref" : "InstanceType"
-                },
-                "UserData"           : {
-                    "Fn::Base64" : {
-                        "Fn::Join" : [
-                            "",
-                            [
-                                "<script>\n",
-                                "\"C:\\Program Files (x86)\\Amazon\\cfn-bootstrap\\cfn-init.exe\" -v -s ",
-                                {
-                                    "Ref" : "AWS::StackName"
-                                },
-                                " -r AutoScaleLaunchConfiguration ",
-                                " --access-key ",
-                                "put curl to metadata here or set default to profile",
-                                " --secret-key ",
-                                "put curl to metadata here or set default to profile",
-                                "\n",
-                                "</script>"
-                            ]
-                        ]
-                    }
+                "KeyName" : { "Ref" : "KeyName" },
+                "IamInstanceProfile":{ "Ref":"InstanceProfile" },
+                "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
+                            { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "InstanceType" }, "Arch" ] } ] },
+                "AssociatePublicIpAddress" : "true",
+                "InstanceType"   : { "Ref" : "InstanceType" },
+                "SecurityGroups" : [ {"Ref" : "RDPSecurityGroup"} ],
+                "UserData": {
+                    "Fn::Base64" : { "Fn::Join" : ["", [
+                        "<script>",
+                            "cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" } ," -r AutoScaleLaunchConfiguration --region ", { "Ref" : "AWS::Region" } , " ",
+                        "</script>"
+                        ] ] }
                 }
             }
         },
-        "AutoScaleGroup" : {
+        "WindowsScaleGroup" : {
             "Type" : "AWS::AutoScaling::AutoScalingGroup",
             "Properties" : {
                 "AvailabilityZones" : { "Fn::GetAZs" : ""},
-                "HealthCheckGracePeriod" : "120",
-                "HealthCheckType"        : "EC2",
-                "LaunchConfigurationName" : { "Ref" : "AutoScaleLaunchConfiguration" },
-                "MinSize" : "2",
-                "MaxSize" : "3",
+                "VPCZoneIdentifier": [ { "Ref" : "SubnetA" },{ "Ref" : "SubnetB" },{ "Ref" : "SubnetC" } ],
+                "LaunchConfigurationName" : {"Ref": "AutoScaleLaunchConfiguration"},
+                "MinSize" : "1",
+                "MaxSize" : "2",
                 "DesiredCapacity" : "1",
-                "LoadBalancerNames" : [ { "Ref" : "LoadBalancer" } ],
-                "Tags" : [{ "Key" : "Name", "Value" : "IIS-Windows-Scale-Group", "PropagateAtLaunch":"true" }]
+                "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
+                "Tags" : [{ "Key" : "Name", "Value" : "Windows-Scale-Group", "PropagateAtLaunch":"true" }]
             }
         },
-        "AutoScaleScaleUpPolicy" : {
-            "Type" : "AWS::AutoScaling::ScalingPolicy",
-            "Properties" : {
-                "AdjustmentType" : "PercentChangeInCapacity",
-                "AutoScalingGroupName" : {
-                    "Ref" : "AutoScaleGroup"
-                },
-                "Cooldown"             : "420",
-                "ScalingAdjustment"    : "200"
-            }
+        "WindowsServerWaitHandle" : {
+            "Type" : "AWS::CloudFormation::WaitConditionHandle"
         },
-        "AutoScaleScaleDownPolicy" : {
-            "Type" : "AWS::AutoScaling::ScalingPolicy",
+        "WindowsServerWaitCondition" : {
+            "Type" : "AWS::CloudFormation::WaitCondition",
+            "DependsOn" : "AutoScaleLaunchConfiguration",
             "Properties" : {
-                "AdjustmentType" : "ChangeInCapacity",
-                "AutoScalingGroupName" : {
-                    "Ref" : "AutoScaleGroup"
-                },
-                "Cooldown"             : "60",
-                "ScalingAdjustment"    : "-1"
+                "Handle" : {"Ref" : "WindowsServerWaitHandle"},
+                "Timeout" : "1800"
             }
-        },
-        "AutoScaleScaleUpAlarm" : {
-            "Type" : "AWS::CloudWatch::Alarm",
-            "Properties" : {
-                "MetricName" : "CPUUtilization",
-                "Namespace"  : "AWS/EC2",
-                "Statistic"  : "Average",
-                "Period"     : "60",
-                "EvaluationPeriods" : "1",
-                "Threshold"         : "75",
-                "AlarmActions"      : [
-                    {
-                        "Ref" : "AutoScaleScaleUpPolicy"
-                    }
-                ],
-                "Dimensions"        : [
-                    {
-                        "Name" : "AutoScalingGroupName",
-                        "Value" : {
-                            "Ref" : "AutoScaleGroup"
-                        }
-                    }
-                ],
-                "ComparisonOperator" : "GreaterThanThreshold"
-            }
-        },
-        "AutoScaleScaleDownAlarm"          : {
-            "Type" : "AWS::CloudWatch::Alarm",
-            "Properties" : {
-                "MetricName" : "CPUUtilization",
-                "Namespace"  : "AWS/EC2",
-                "Statistic"  : "Average",
-                "Period"     : "60",
-                "EvaluationPeriods" : "2",
-                "Threshold"         : "50",
-                "AlarmActions"      : [
-                    {
-                        "Ref" : "AutoScaleScaleDownPolicy"
-                    }
-                ],
-                "Dimensions"        : [
-                    {
-                        "Name" : "AutoScalingGroupName",
-                        "Value" : {
-                            "Ref" : "AutoScaleGroup"
-                        }
-                    }
-                ],
-                "ComparisonOperator" : "LessThanThreshold"
-            }
-        },
-        "DNSRecord"                        : {
-            "Type" : "AWS::Route53::RecordSet",
-            "Properties" : {
-                "HostedZoneName" : {
-                    "Ref" : "DNSHostedZone"
-                },
-                "Comment"        : "VPN Host. Created by Cloud Formation.",
-                "Name"           : {
-                    "Fn::Join" : [
-                        ".",
-                        [
-                            {
-                                "Ref" : "DNSSubDomain"
-                            },
-                            {
-                                "Ref" : "DNSHostedZone"
-                            }
-                        ]
-                    ]
-                },
-                "Type"           : "CNAME",
-                "TTL"            : "150",
-                "ResourceRecords" : [
-                    {
-                        "Fn::GetAtt" : [
-                            "LoadBalancer",
-                            "CanonicalHostedZoneName"
-                        ]
-                    }
-                ]
-            },
-            "DependsOn"  : "LoadBalancer"
         }
     },
     "Outputs": {
     }
-}
 }
