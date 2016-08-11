@@ -33,12 +33,12 @@
             "Default": ""
         },
         "S3Bucket": {
-            "Description" : "S3 Bucket Name and/or Path",
+            "Description" : "S3 Bucket Name",
             "Type": "String",
             "Default": ""
         },
         "UserDataPowerShell": {
-            "Description" : "Enter Powershell script name",
+            "Description" : "Enter Powershell script name and/or path (i.e.; my/path/userdata.ps1, userdata.ps1)",
             "Type": "String",
             "Default": ""
         },
