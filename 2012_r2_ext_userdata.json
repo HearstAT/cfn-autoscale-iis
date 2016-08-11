@@ -296,7 +296,7 @@
                             },
                             "3-run-userdata" : {
                                 "command" : "@powershell -NoProfile -ExecutionPolicy Bypass -Command C:\\user-init\\userdata.ps1\""
-                            },
+                            }
                         },
                         "services" : {
                             "windows" : {
