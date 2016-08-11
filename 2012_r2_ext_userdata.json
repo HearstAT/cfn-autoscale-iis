@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Windows 2012 R2 Base - IIS Autoscale (10-Aug-2016)",
+    "Description": "Windows 2012 R2 Base - IIS Autoscale (11-Aug-2016)",
     "Parameters": {
         "KeyName": {
             "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instance",
