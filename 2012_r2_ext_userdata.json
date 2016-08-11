@@ -275,7 +275,7 @@
                                     "triggers=post.update\n",
                                     "path=Resources.JenkinsWindowsInstance.Metadata.AWS::CloudFormation::Init\n",
                                     "action=cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" },
-                                    " -r AutoScaleLaunchConfiguration",
+                                    " --resource AutoScaleLaunchConfiguration",
                                     " --region ", { "Ref" : "AWS::Region" }, "\n"
                                 ]]}
                             },
@@ -286,39 +286,25 @@
                                 "group":"root",
                                 "authentication":"S3AccessCreds"
                             }
-                        }
-                    },
-                    "commands" : {
-                        "1-install-chocolately" : {
-                            "command" : { "Fn::Join" : [ "", [
-                                "@powershell -NoProfile -ExecutionPolicy Bypass -Command ",
-                                "\"iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex\" && SET PATH=%PATH%;%ALLUSERSPROFILE%\\chocolatey\\bin"
-                                ]]}
                         },
-                        "2-install-acme" : {
-                            "command" : { "Fn::Join" : [ "", [
-                                "@powershell -NoProfile -ExecutionPolicy Bypass -Command ",
-                                "\"C:\\ProgramData\\chocolatey\\bin\\choco.exe install -y acmesharp-posh-all\""
-                                ]]}
+                        "commands" : {
+                            "1-install-chocolately" : {
+                                "command" : "@powershell -NoProfile -ExecutionPolicy Bypass -Command \"iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex \" && SET PATH=%PATH%;%ALLUSERSPROFILE%\\chocolatey\\bin"
+                            },
+                            "2-install-acme" : {
+                                "command" : "@powershell -NoProfile -ExecutionPolicy Bypass -Command \"C:\\ProgramData\\chocolatey\\bin\\choco.exe install -y acmesharp-posh-all\""
+                            },
+                            "3-run-userdata" : {
+                                "command" : "@powershell -NoProfile -ExecutionPolicy Bypass -Command C:\\user-init\\userdata.ps1\""
+                            },
                         },
-                        "3-run-userdata" : {
-                            "command" : { "Fn::Join" : [ "", [
-                                "@powershell -NoProfile -ExecutionPolicy Bypass -Command ",
-                                "C:\\user-init\\userdata.ps1\""
-                                ]]}
-                        },
-                        "4-cfn-signal" : {
-                            "command" : { "Fn::Join" : [ "", [
-                                "cfn-signal.exe -e %ERRORLEVEL% ", { "Fn::Base64" : { "Ref" : "WindowsServerWaitHandle" } } ," "
-                                ]]}
-                        }
-                    },
-                    "services" : {
-                        "windows" : {
-                            "cfn-hup" : {
-                                "enabled" : "true",
-                                "ensureRunning" : "true",
-                                "files" : ["c:\\cfn\\cfn-hup.conf", "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"]
+                        "services" : {
+                            "windows" : {
+                                "cfn-hup" : {
+                                    "enabled" : "true",
+                                    "ensureRunning" : "true",
+                                    "files" : ["c:\\cfn\\cfn-hup.conf", "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"]
+                                }
                             }
                         }
                     }
@@ -332,10 +318,10 @@
                 "AssociatePublicIpAddress" : "true",
                 "InstanceType"   : { "Ref" : "InstanceType" },
                 "SecurityGroups" : [ {"Ref" : "RDPSecurityGroup"} ],
-                "UserData": {
-                    "Fn::Base64" : { "Fn::Join" : ["", [
+                "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
                         "<script>",
-                            "cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" } ," -r AutoScaleLaunchConfiguration --region ", { "Ref" : "AWS::Region" } , " ",
+                        "cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" } ," --resource AutoScaleLaunchConfiguration --region ", { "Ref" : "AWS::Region" } ," \n",
+                        "cfn-signal.exe -e %ERRORLEVEL% ", { "Fn::Base64" : { "Ref" : "WindowsServerWaitHandle" }}, "\n",
                         "</script>"
                         ] ] }
                 }
