@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Windows 2012 R2 Base - IIS Autoscale (11-Aug-2016)",
+    "Description": "Windows 2012 R2 Base - IIS Autoscale (16-Aug-2016)",
     "Parameters": {
         "KeyName": {
             "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instance",
@@ -85,6 +85,24 @@
                 "cg1.4xlarge"
             ],
             "ConstraintDescription": "must be a valid EC2 instance type."
+        }
+    },
+    "Metadata" : {
+        "AWS::CloudFormation::Interface" : {
+            "ParameterGroups" : [
+                {
+                    "Label" : { "default": "EC2 Config" },
+                    "Parameters" : ["InstanceType", "KeyName", "RDPSecurityGroup" ]
+                },
+                {
+                    "Label" : { "default": "VPC Config" },
+                    "Parameters" : ["VPC", "SubnetA", "SubnetB", "SubnetC"]
+                },
+                {
+                    "Label" : { "default": "Userdata Config" },
+                    "Parameters" : ["S3Bucket", "UserDataPowerShell"]
+                }
+            ]
         }
     },
     "Mappings" : {
