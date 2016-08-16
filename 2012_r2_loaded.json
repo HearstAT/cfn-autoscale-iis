@@ -1,0 +1,486 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Windows 2012 R2 w/ All Features - IIS Autoscale (16-Aug-2016)",
+    "Parameters": {
+        "KeyName": {
+            "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+            "Type" : "AWS::EC2::KeyPair::KeyName",
+            "Default": ""
+        },
+        "RDPSecurityGroup" : {
+            "Description" : "Select Security Group for RDP Access",
+            "Type": "AWS::EC2::SecurityGroup::Id",
+            "Default": ""
+        },
+        "VPC": {
+            "Description" : "Choose VPC to use",
+            "Type" : "AWS::EC2::VPC::Id",
+            "Default": ""
+        },
+        "SubnetA": {
+            "Description" : "Enter CIDR Block to Create (e.g.; 0.0.0.0/24)",
+            "Type" : "String",
+            "Default": ""
+        },
+        "SubnetB": {
+            "Description" : "Enter CIDR Block to Create (e.g.; 0.0.0.0/24)",
+            "Type" : "String",
+            "Default": ""
+        },
+        "SubnetC": {
+            "Description" : "Enter CIDR Block to Create (e.g.; 0.0.0.0/24)",
+            "Type" : "String",
+            "Default": ""
+        },
+        "AvailabilityZoneA": {
+            "Description" : "Choose Availability Zone to use: Required",
+            "Type" : "AWS::EC2::AvailabilityZone::Name",
+            "Default": ""
+        },
+        "AvailabilityZoneB": {
+            "Description" : "Choose Availability Zone to use: Required",
+            "Type" : "AWS::EC2::AvailabilityZone::Name",
+            "Default": ""
+        },
+        "AvailabilityZoneC": {
+            "Description" : "Choose Availability Zone to use: Optional",
+            "Type" : "AWS::EC2::AvailabilityZone::Name",
+            "Default": ""
+        },
+        "S3Bucket": {
+            "Description" : "S3 Bucket Name",
+            "Type": "String",
+            "Default": ""
+        },
+        "UserDataPowerShell": {
+            "Description" : "Enter Powershell script name and/or path (i.e.; my/path/userdata.ps1, userdata.ps1)",
+            "Type": "String",
+            "Default": ""
+        },
+        "HostedZone": {
+            "Type": "String",
+            "Default": "domain.com",
+            "Description": "must match a route53 hosted domain/zone"
+        },
+        "Subdomain": {
+            "Type": "String",
+            "Default": "app-blue",
+            "AllowedValues": ["app-blue", "app-green"],
+            "Description": "subdomain/prefix for chose hosted zone used for staging"
+        },
+        "InstanceType": {
+            "Type": "String",
+            "Default": "t2.micro",
+            "AllowedValues": [
+                "t2.micro",
+                "t2.small",
+                "t2.medium",
+                "m3.medium",
+                "m3.large",
+                "m3.xlarge",
+                "m3.2xlarge",
+                "c3.large",
+                "c3.xlarge",
+                "c3.2xlarge",
+                "c3.4xlarge",
+                "c3.8xlarge",
+                "c4.large",
+                "c4.xlarge",
+                "c4.2xlarge",
+                "c4.4xlarge",
+                "c4.8xlarge",
+                "g2.2xlarge",
+                "r3.large",
+                "r3.xlarge",
+                "r3.2xlarge",
+                "r3.4xlarge",
+                "r3.8xlarge",
+                "i2.xlarge",
+                "i2.2xlarge",
+                "i2.4xlarge",
+                "i2.8xlarge",
+                "d2.xlarge",
+                "d2.2xlarge",
+                "d2.4xlarge",
+                "d2.8xlarge",
+                "hi1.4xlarge",
+                "hs1.8xlarge",
+                "cr1.8xlarge",
+                "cc2.8xlarge",
+                "cg1.4xlarge"
+            ],
+            "ConstraintDescription": "must be a valid EC2 instance type."
+        }
+    },
+    "Metadata" : {
+        "AWS::CloudFormation::Interface" : {
+            "ParameterGroups" : [
+                {
+                    "Label" : { "default": "EC2 Config" },
+                    "Parameters" : ["InstanceType", "KeyName", "RDPSecurityGroup" ]
+                },
+                {
+                    "Label" : { "default": "VPC Config" },
+                    "Parameters" : ["VPC", "SubnetA", "SubnetB", "SubnetC"]
+                },
+                {
+                    "Label" : { "default": "Userdata Config" },
+                    "Parameters" : ["S3Bucket", "UserDataPowerShell"]
+                },
+                {
+                    "Label" : { "default": "Route 53 Config" },
+                    "Parameters" : ["Subdomain", "HostedZone"]
+                }
+            ]
+        }
+    },
+    "Mappings" : {
+        "AWSInstanceType2Arch" : {
+            "t2.micro"    : { "Arch" : "HVM64"  },
+            "t2.small"    : { "Arch" : "HVM64"  },
+            "t2.medium"   : { "Arch" : "HVM64"  },
+            "t2.large"    : { "Arch" : "HVM64"  },
+            "m1.small"    : { "Arch" : "HVM64"  },
+            "m1.medium"   : { "Arch" : "HVM64"  },
+            "m1.large"    : { "Arch" : "HVM64"  },
+            "m1.xlarge"   : { "Arch" : "HVM64"  },
+            "m2.xlarge"   : { "Arch" : "HVM64"  },
+            "m2.2xlarge"  : { "Arch" : "HVM64"  },
+            "m2.4xlarge"  : { "Arch" : "HVM64"  },
+            "m3.medium"   : { "Arch" : "HVM64"  },
+            "m3.large"    : { "Arch" : "HVM64"  },
+            "m3.xlarge"   : { "Arch" : "HVM64"  },
+            "m3.2xlarge"  : { "Arch" : "HVM64"  },
+            "m4.large"    : { "Arch" : "HVM64"  },
+            "m4.xlarge"   : { "Arch" : "HVM64"  },
+            "m4.2xlarge"  : { "Arch" : "HVM64"  },
+            "m4.4xlarge"  : { "Arch" : "HVM64"  },
+            "m4.10xlarge" : { "Arch" : "HVM64"  },
+            "c1.medium"   : { "Arch" : "HVM64"  },
+            "c1.xlarge"   : { "Arch" : "HVM64"  },
+            "c3.large"    : { "Arch" : "HVM64"  },
+            "c3.xlarge"   : { "Arch" : "HVM64"  },
+            "c3.2xlarge"  : { "Arch" : "HVM64"  },
+            "c3.4xlarge"  : { "Arch" : "HVM64"  },
+            "c3.8xlarge"  : { "Arch" : "HVM64"  },
+            "c4.large"    : { "Arch" : "HVM64"  },
+            "c4.xlarge"   : { "Arch" : "HVM64"  },
+            "c4.2xlarge"  : { "Arch" : "HVM64"  },
+            "c4.4xlarge"  : { "Arch" : "HVM64"  },
+            "c4.8xlarge"  : { "Arch" : "HVM64"  },
+            "g2.2xlarge"  : { "Arch" : "HVM64"  },
+            "g2.8xlarge"  : { "Arch" : "HVM64"  },
+            "r3.large"    : { "Arch" : "HVM64"  },
+            "r3.xlarge"   : { "Arch" : "HVM64"  },
+            "r3.2xlarge"  : { "Arch" : "HVM64"  },
+            "r3.4xlarge"  : { "Arch" : "HVM64"  },
+            "r3.8xlarge"  : { "Arch" : "HVM64"  },
+            "i2.xlarge"   : { "Arch" : "HVM64"  },
+            "i2.2xlarge"  : { "Arch" : "HVM64"  },
+            "i2.4xlarge"  : { "Arch" : "HVM64"  },
+            "i2.8xlarge"  : { "Arch" : "HVM64"  },
+            "d2.xlarge"   : { "Arch" : "HVM64"  },
+            "d2.2xlarge"  : { "Arch" : "HVM64"  },
+            "d2.4xlarge"  : { "Arch" : "HVM64"  },
+            "d2.8xlarge"  : { "Arch" : "HVM64"  },
+            "hi1.4xlarge" : { "Arch" : "HVM64"  },
+            "hs1.8xlarge" : { "Arch" : "HVM64"  },
+            "cr1.8xlarge" : { "Arch" : "HVM64"  },
+            "cc2.8xlarge" : { "Arch" : "HVM64"  }
+        },
+        "AWSRegionArch2AMI": {
+            "us-east-1"       : { "HVM64": "ami-74a73263" },
+            "us-west-2"       : { "HVM64": "ami-2426e944" },
+            "us-west-1"       : { "HVM64": "ami-6d0b4b0d" },
+            "eu-west-1"       : { "HVM64": "ami-6fd5b81c" },
+            "eu-central-1"    : { "HVM64": "ami-3f649050" },
+            "ap-northeast-1"  : { "HVM64": "ami-760ff517" },
+            "ap-northeast-2"  : { "HVM64": "ami-f3f13b9d" },
+            "ap-southeast-1"  : { "HVM64": "ami-eceb348f" },
+            "ap-southeast-2"  : { "HVM64": "ami-0b497c68" },
+            "sa-east-1"       : { "HVM64": "ami-f1be299d" }
+        }
+    },
+    "Conditions" : {
+        "AvailabilityZoneConA" : {"Fn::Not" : [{"Fn::Equals" : [{"Ref" : "AvailabilityZoneA"}, "AWS::NoValue"]}]},
+        "AvailabilityZoneConB" : {"Fn::Not" : [{"Fn::Equals" : [{"Ref" : "AvailabilityZoneB"}, "AWS::NoValue"]}]},
+        "AvailabilityZoneConC" : {"Fn::Not" : [{"Fn::Equals" : [{"Ref" : "AvailabilityZoneC"}, "AWS::NoValue"]}]}
+    },
+    "Resources": {
+        "WindowsSubnetA" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Condition" : "AvailabilityZoneConA",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "AvailabilityZone" : { "Ref": "AvailabilityZoneA" },
+                "CidrBlock" : { "Ref" : "SubnetA" },
+                "Tags" : [
+                    { "Key" : "Name", "Value" : "Windows-Load-Balanced-SubnetA" },
+                    { "Key" : "Application", "Value" : { "Ref" : "AWS::StackId" } },
+                    { "Key" : "Network", "Value" : "Public" }
+                ]
+            }
+        },
+        "WindowsSubnetB" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Condition" : "AvailabilityZoneConB",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "AvailabilityZone" : { "Ref": "AvailabilityZoneB" },
+                "CidrBlock" : { "Ref" : "SubnetB" },
+                "Tags" : [
+                    { "Key" : "Name", "Value" : "Windows-Load-Balanced-SubnetB" },
+                    { "Key" : "Application", "Value" : { "Ref" : "AWS::StackId" } },
+                    { "Key" : "Network", "Value" : "Public" }
+                ]
+            }
+        },
+        "WindowsSubnetC" : {
+            "Type" : "AWS::EC2::Subnet",
+            "Condition" : "AvailabilityZoneConC",
+            "Properties" : {
+                "VpcId" : { "Ref" : "VPC" },
+                "AvailabilityZone" : { "Ref": "AvailabilityZoneC" },
+                "CidrBlock" : { "Ref" : "SubnetC" },
+                "Tags" : [
+                  { "Key" : "Name", "Value" : "Windows-Load-Balanced-SubnetC" },
+                  { "Key" : "Name", "Value" : "Chef-Public-Subnet" },
+                  { "Key" : "Application", "Value" : { "Ref" : "AWS::StackId" } },
+                  { "Key" : "Network", "Value" : "Public" }
+                ]
+            }
+        },
+        "InstanceRole":{
+            "Type":"AWS::IAM::Role",
+            "Properties":{
+                "AssumeRolePolicyDocument":{
+                    "Statement":[
+                        {
+                            "Effect":"Allow",
+                            "Principal":{
+                                "Service":[
+                                    "ec2.amazonaws.com"
+                                ]
+                            },
+                            "Action":[
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path":"/"
+            }
+        },
+        "RolePolicies":{
+            "Type":"AWS::IAM::Policy",
+            "Properties":{
+                "PolicyName":"S3Download",
+                "PolicyDocument":{
+                    "Statement":[
+                        {
+                            "Action":[
+                                "s3:GetObject"
+                            ],
+                            "Effect":"Allow",
+                            "Resource": { "Fn::Join" : ["", [ "arn:aws:s3:::", { "Ref": "S3Bucket" }, "/", { "Ref": "UserDataPowerShell" } ]]}
+                        }
+                    ]
+                },
+                "Roles":[
+                    { "Ref":"InstanceRole" }
+                ]
+            }
+        },
+        "InstanceProfile":{
+         "Type":"AWS::IAM::InstanceProfile",
+         "Properties":{
+            "Path":"/",
+            "Roles":[
+               { "Ref":"InstanceRole" }
+            ]
+         }
+        },
+        "LoadBalancerSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Setup Ingress/Egress for Windows Load Balancer",
+                "VpcId" : { "Ref" : "VPC" },
+                "SecurityGroupIngress" : [ { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" },
+                                           { "IpProtocol" : "tcp", "FromPort" : "443", "ToPort" : "443", "CidrIp" : "0.0.0.0/0" } ],
+                "SecurityGroupEgress" : [ { "IpProtocol" : "tcp", "FromPort" : "0",  "ToPort" : "65535",  "CidrIp" : "0.0.0.0/0" } ],
+                "Tags" : [
+                    { "Key" : "Name", "Value" : "Windows-ELB-SecurityGroup" }
+                ]
+            }
+        },
+        "ElasticLoadBalancer" : {
+            "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
+            "Properties" : {
+                "Subnets": {"Fn::If" : ["AvailabilityZoneConC",
+                                            [ { "Ref" : "WindowsSubnetA" },{ "Ref" : "WindowsSubnetB" },{ "Ref" : "WindowsSubnetC" } ] ,
+                                            [ { "Ref" : "WindowsSubnetA" },{ "Ref" : "WindowsSubnetB" } ]
+                            ]},
+                "Subnets" : [ { "Ref" : "WindowsSubnetA" },{ "Ref" : "WindowsSubnetB" },{ "Ref" : "WindowsSubnetC" } ],
+                "SecurityGroups" : [ { "Ref" : "LoadBalancerSecurityGroup" } ],
+                "LBCookieStickinessPolicy" : [
+                    {
+                        "PolicyName" : "PublicELBCookieStickinessPolicy",
+                        "CookieExpirationPeriod" : "3600"
+                    }
+                ],
+                "Listeners" : [
+                    {
+                        "InstancePort": "80",
+                        "LoadBalancerPort": "80",
+                        "InstanceProtocol": "HTTP",
+                        "Protocol": "HTTP",
+                        "PolicyNames" : [ "PublicELBCookieStickinessPolicy" ]
+                    }
+                ],
+                "HealthCheck" : {
+                    "Target" : "HTTP:80/index.html",
+                    "HealthyThreshold" : "2",
+                    "UnhealthyThreshold" : "10",
+                    "Interval" : "90",
+                    "Timeout" : "60"
+                },
+                "Tags" : [
+                    { "Key" : "Name", "Value" : "Windows-ELB" }
+                ]
+            }
+        },
+        "ExternalDNS" : {
+            "Type" : "AWS::Route53::RecordSetGroup",
+            "Properties" : {
+                "HostedZoneName": { "Fn::Join" : [ "",[{ "Ref" : "HostedZone" } ,"." ] ]},
+                "Comment" : "Zone apex alias targeted to myELB LoadBalancer.",
+                "RecordSets" : [
+                    {
+                        "Name" : { "Fn::Join": ["",[{ "Ref": "Subdomain" },".",{ "Ref": "HostedZone" },"."]] },
+                        "Type" : "A",
+                        "AliasTarget" : {
+                            "HostedZoneId" : { "Fn::GetAtt" : ["ElasticLoadBalancer", "CanonicalHostedZoneNameID"] },
+                            "DNSName" : { "Fn::GetAtt" : ["ElasticLoadBalancer","CanonicalHostedZoneName"] }
+                        }
+                    }
+                ]
+            }
+        },
+        "InstanceSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Setup Ingress/Egress for Instance/App",
+                "VpcId" : { "Ref" : "VPC" },
+                "SecurityGroupIngress" : [
+                    { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "SourceSecurityGroupId" : { "Ref" : "LoadBalancerSecurityGroup" } } ,
+                    { "IpProtocol" : "tcp", "FromPort" : "443", "ToPort" : "443", "SourceSecurityGroupId" : { "Ref" : "LoadBalancerSecurityGroup" } } ],
+                "SecurityGroupEgress" : [
+                    { "IpProtocol" : "tcp", "FromPort" : "0",  "ToPort" : "65535",  "CidrIp" : "0.0.0.0/0" } ],
+                "Tags" : [ { "Key" : "Name", "Value" : "Windows-Autoscale-Security-Group" } ]
+            }
+        },
+        "AutoScaleLaunchConfiguration" : {
+            "Type" : "AWS::AutoScaling::LaunchConfiguration",
+            "Metadata" : {
+                "AWS::CloudFormation::Authentication":{
+                    "S3AccessCreds":{
+                        "type":"S3",
+                        "roleName":{ "Ref":"InstanceRole" }
+                    }
+                },
+                "AWS::CloudFormation::Init" : {
+                    "config" : {
+                        "files" : {
+                            "c:\\cfn\\cfn-hup.conf" : {
+                                "content" : { "Fn::Join" : ["", [
+                                    "[main]\n",
+                                    "stack=", { "Ref" : "AWS::StackId" }, "\n",
+                                    "region=", { "Ref" : "AWS::Region" }, "\n"
+                                ]]}
+                            },
+                            "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf" : {
+                                "content": { "Fn::Join" : ["", [
+                                    "[cfn-auto-reloader-hook]\n",
+                                    "triggers=post.update\n",
+                                    "path=Resources.JenkinsWindowsInstance.Metadata.AWS::CloudFormation::Init\n",
+                                    "action=cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" },
+                                    " --resource AutoScaleLaunchConfiguration",
+                                    " --region ", { "Ref" : "AWS::Region" }, "\n"
+                                ]]}
+                            },
+                            "c:\\user-init\\userdata.ps1":{
+                                "source": { "Fn::Join" : ["", [ "http://", { "Ref": "S3Bucket" }, ".s3.amazonaws.com/", { "Ref": "UserDataPowerShell" } ]]},
+                                "mode":"000777",
+                                "owner":"root",
+                                "group":"root",
+                                "authentication":"S3AccessCreds"
+                            }
+                        },
+                        "commands" : {
+                            "1-install-chocolately" : {
+                                "command" : "@powershell -NoProfile -ExecutionPolicy Bypass -Command \"iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex \" && SET PATH=%PATH%;%ALLUSERSPROFILE%\\chocolatey\\bin"
+                            },
+                            "2-install-acme" : {
+                                "command" : "@powershell -NoProfile -ExecutionPolicy Bypass -Command \"C:\\ProgramData\\chocolatey\\bin\\choco.exe install -y acmesharp-posh-all\""
+                            },
+                            "3-run-userdata" : {
+                                "command" : "@powershell -NoProfile -ExecutionPolicy Bypass -Command C:\\user-init\\userdata.ps1\""
+                            }
+                        },
+                        "services" : {
+                            "windows" : {
+                                "cfn-hup" : {
+                                    "enabled" : "true",
+                                    "ensureRunning" : "true",
+                                    "files" : ["c:\\cfn\\cfn-hup.conf", "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf"]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "Properties" : {
+                "KeyName" : { "Ref" : "KeyName" },
+                "IamInstanceProfile":{ "Ref":"InstanceProfile" },
+                "ImageId" : { "Fn::FindInMap" : [ "AWSRegionArch2AMI", { "Ref" : "AWS::Region" },
+                            { "Fn::FindInMap" : [ "AWSInstanceType2Arch", { "Ref" : "InstanceType" }, "Arch" ] } ] },
+                "AssociatePublicIpAddress" : "true",
+                "InstanceType"   : { "Ref" : "InstanceType" },
+                "SecurityGroups" : [ {"Ref" : "RDPSecurityGroup"} ],
+                "UserData": { "Fn::Base64" : { "Fn::Join" : ["", [
+                        "<script>",
+                        "cfn-init.exe -v -s ", { "Ref" : "AWS::StackId" } ," --resource AutoScaleLaunchConfiguration --region ", { "Ref" : "AWS::Region" } ," \n",
+                        "cfn-signal.exe -e %ERRORLEVEL% ", { "Fn::Base64" : { "Ref" : "WindowsServerWaitHandle" }}, "\n",
+                        "</script>"
+                        ] ] }
+                }
+            }
+        },
+        "WindowsScaleGroup" : {
+            "Type" : "AWS::AutoScaling::AutoScalingGroup",
+            "Properties" : {
+                "AvailabilityZones" : { "Fn::GetAZs" : ""},
+                "VPCZoneIdentifier": [ { "Ref" : "WindowsSubnetA" },{ "Ref" : "WindowsSubnetB" },{ "Ref" : "WindowsSubnetC" } ],
+                "LaunchConfigurationName" : {"Ref": "AutoScaleLaunchConfiguration"},
+                "MinSize" : "1",
+                "MaxSize" : "2",
+                "DesiredCapacity" : "1",
+                "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
+                "Tags" : [{ "Key" : "Name", "Value" : "Windows-Scale-Group", "PropagateAtLaunch":"true" }]
+            }
+        },
+        "WindowsServerWaitHandle" : {
+            "Type" : "AWS::CloudFormation::WaitConditionHandle"
+        },
+        "WindowsServerWaitCondition" : {
+            "Type" : "AWS::CloudFormation::WaitCondition",
+            "DependsOn" : "AutoScaleLaunchConfiguration",
+            "Properties" : {
+                "Handle" : {"Ref" : "WindowsServerWaitHandle"},
+                "Timeout" : "1800"
+            }
+        }
+    },
+    "Outputs": {
+    }
+}
