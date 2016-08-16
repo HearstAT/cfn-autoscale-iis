@@ -1,6 +1,6 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "Windows 2012 R2 Base - IIS Autoscale (16-Aug-2016)",
+    "Description": "Windows 2012 R2 w/ External Userdata and Route53 - IIS Autoscale (16-Aug-2016)",
     "Parameters": {
         "KeyName": {
             "Description" : "Name of an existing EC2 KeyPair to enable SSH access to the instance",
@@ -297,6 +297,19 @@
                         }
                     }
                 ]
+            }
+        },
+        "InstanceSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Setup Ingress/Egress for Instance/App",
+                "VpcId" : { "Ref" : "VPC" },
+                "SecurityGroupIngress" : [
+                    { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "SourceSecurityGroupId" : { "Ref" : "LoadBalancerSecurityGroup" } } ,
+                    { "IpProtocol" : "tcp", "FromPort" : "443", "ToPort" : "443", "SourceSecurityGroupId" : { "Ref" : "LoadBalancerSecurityGroup" } } ],
+                "SecurityGroupEgress" : [
+                    { "IpProtocol" : "tcp", "FromPort" : "0",  "ToPort" : "65535",  "CidrIp" : "0.0.0.0/0" } ],
+                "Tags" : [ { "Key" : "Name", "Value" : "Windows-Autoscale-Security-Group" } ]
             }
         },
         "AutoScaleLaunchConfiguration" : {

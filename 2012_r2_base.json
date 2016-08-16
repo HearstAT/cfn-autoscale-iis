@@ -203,6 +203,19 @@
                 ]
             }
         },
+        "InstanceSecurityGroup" : {
+            "Type" : "AWS::EC2::SecurityGroup",
+            "Properties" : {
+                "GroupDescription" : "Setup Ingress/Egress for Instance/App",
+                "VpcId" : { "Ref" : "VPC" },
+                "SecurityGroupIngress" : [
+                    { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "SourceSecurityGroupId" : { "Ref" : "LoadBalancerSecurityGroup" } } ,
+                    { "IpProtocol" : "tcp", "FromPort" : "443", "ToPort" : "443", "SourceSecurityGroupId" : { "Ref" : "LoadBalancerSecurityGroup" } } ],
+                "SecurityGroupEgress" : [
+                    { "IpProtocol" : "tcp", "FromPort" : "0",  "ToPort" : "65535",  "CidrIp" : "0.0.0.0/0" } ],
+                "Tags" : [ { "Key" : "Name", "Value" : "Windows-Autoscale-Security-Group" } ]
+            }
+        },
         "AutoScaleLaunchConfiguration" : {
             "Type" : "AWS::AutoScaling::LaunchConfiguration",
             "Metadata" : {
