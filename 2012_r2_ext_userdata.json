@@ -293,6 +293,15 @@
                 "AWS::CloudFormation::Init" : {
                     "config" : {
                         "files" : {
+                            "C:\\inetpub\\wwwroot\\index.html" : {
+                                "content" : { "Fn::Join" : ["", [
+                                    "<html>\n",
+                                    "<body>\n",
+                                    "This is just a test. I will be replaced\n",
+                                    "<\\body>\n",
+                                    "<\\html>\n"
+                                ]]}
+                            },
                             "c:\\cfn\\cfn-hup.conf" : {
                                 "content" : { "Fn::Join" : ["", [
                                     "[main]\n",

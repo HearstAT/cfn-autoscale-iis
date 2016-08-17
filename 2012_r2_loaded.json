@@ -396,6 +396,15 @@
                                     "region=", { "Ref" : "AWS::Region" }, "\n"
                                 ]]}
                             },
+                            "C:\\inetpub\\wwwroot\\index.html" : {
+                                "content" : { "Fn::Join" : ["", [
+                                    "<html>\n",
+                                    "<body>\n",
+                                    "This is just a test. I will be replaced\n",
+                                    "<\\body>\n",
+                                    "<\\html>\n"
+                                ]]}
+                            },
                             "c:\\cfn\\hooks.d\\cfn-auto-reloader.conf" : {
                                 "content": { "Fn::Join" : ["", [
                                     "[cfn-auto-reloader-hook]\n",
