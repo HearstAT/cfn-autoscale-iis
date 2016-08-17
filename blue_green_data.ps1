@@ -7,6 +7,6 @@ rm $indexfile
 
 [System.IO.File]::WriteAllLines($indexfile,'<html>')
 [System.IO.File]::AppendAllText($indexfile,'<body>' + ([Environment]::NewLine))
-[System.IO.File]::AppendAllText($indexfile,'node_name ' + 'I am the' + $appcolor + "my instance id is:" + $instanceid + ([Environment]::NewLine))
-[System.IO.File]::AppendAllText($indexfile,'<\body>' + ([Environment]::NewLine))
-[System.IO.File]::AppendAllText($indexfile,'<\html>' + ([Environment]::NewLine))
+[System.IO.File]::AppendAllText($indexfile,'I am the ' + $appcolor + "my instance id is: " + $instanceid + ([Environment]::NewLine))
+[System.IO.File]::AppendAllText($indexfile,'</body>' + ([Environment]::NewLine))
+[System.IO.File]::AppendAllText($indexfile,'</html>' + ([Environment]::NewLine))
