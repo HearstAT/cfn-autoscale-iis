@@ -68,6 +68,54 @@
             "AllowedValues": ["app-blue", "app-green"],
             "Description": "subdomain/prefix for chose hosted zone used for staging"
         },
+        "AutoMin": {
+            "Type": "String",
+            "Default": "1",
+            "AllowedValues": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9"
+            ],
+            "Description": "Select minimum instance number for Auto Scaling"
+        },
+        "AutoMax": {
+            "Type": "String",
+            "Default": "1",
+            "AllowedValues": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9"
+            ],
+            "Description": "Select maximum instance number for Auto Scaling"
+        },
+        "AutoDesired": {
+            "Type": "String",
+            "Default": "1",
+            "AllowedValues": [
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6",
+                "7",
+                "8",
+                "9"
+            ],
+            "Description": "Select desired instance number for Auto Scaling"
+        },
         "InstanceType": {
             "Type": "String",
             "Default": "t2.micro",
@@ -120,8 +168,12 @@
                     "Parameters" : ["InstanceType", "KeyName", "RDPSecurityGroup" ]
                 },
                 {
+                    "Label" : { "default": "Autoscale Config" },
+                    "Parameters" : ["AutoMin", "AutoMax", "AutoDesired" ]
+                },
+                {
                     "Label" : { "default": "VPC Config" },
-                    "Parameters" : ["VPC", "SubnetA", "SubnetB", "SubnetC"]
+                    "Parameters" : ["VPC", "SubnetA", "SubnetB", "SubnetC", "AvailabilityZoneA", "AvailabilityZoneB", "AvailabilityZoneC"]
                 },
                 {
                     "Label" : { "default": "Userdata Config" },
@@ -471,9 +523,9 @@
                 "AvailabilityZones" : { "Fn::GetAZs" : ""},
                 "VPCZoneIdentifier": [ { "Ref" : "WindowsSubnetA" },{ "Ref" : "WindowsSubnetB" },{ "Ref" : "WindowsSubnetC" } ],
                 "LaunchConfigurationName" : {"Ref": "AutoScaleLaunchConfiguration"},
-                "MinSize" : "1",
-                "MaxSize" : "2",
-                "DesiredCapacity" : "1",
+                "MinSize" : { "Ref" : "AutoMin" },
+                "MaxSize" : { "Ref" : "AutoMax" },
+                "DesiredCapacity" : { "Ref" : "AutoDesired" },
                 "LoadBalancerNames" : [ { "Ref" : "ElasticLoadBalancer" } ],
                 "Tags" : [{ "Key" : "Name", "Value" : "Windows-Scale-Group", "PropagateAtLaunch":"true" }]
             }
