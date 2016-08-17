@@ -431,7 +431,7 @@
                                 "command" : "@powershell -NoProfile -ExecutionPolicy Bypass -Command \"C:\\ProgramData\\chocolatey\\bin\\choco.exe install -y acmesharp-posh-all\""
                             },
                             "3-run-userdata" : {
-                                "command" : "@powershell -NoProfile -ExecutionPolicy Bypass -Command C:\\user-init\\userdata.ps1\""
+                                "command" : "@powershell -NoProfile -ExecutionPolicy Bypass -Command $appcolor='", { "Ref" : "Subdomain" }, "' C:\\user-init\\userdata.ps1\""
                             }
                         },
                         "services" : {
