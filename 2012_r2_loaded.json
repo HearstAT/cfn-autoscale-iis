@@ -202,14 +202,12 @@
         }
     },
     "Conditions" : {
-        "AvailabilityZoneConA" : {"Fn::Not" : [{"Fn::Equals" : [{"Ref" : "AvailabilityZoneA"}, "AWS::NoValue"]}]},
-        "AvailabilityZoneConB" : {"Fn::Not" : [{"Fn::Equals" : [{"Ref" : "AvailabilityZoneB"}, "AWS::NoValue"]}]},
-        "AvailabilityZoneConC" : {"Fn::Not" : [{"Fn::Equals" : [{"Ref" : "AvailabilityZoneC"}, "AWS::NoValue"]}]}
+        "SubnetConC" : {"Fn::Not" : [{"Fn::Equals" : [{"Ref" : "SubnetC"}, "AWS::NoValue"]}]}
     },
     "Resources": {
         "WindowsSubnetA" : {
             "Type" : "AWS::EC2::Subnet",
-            "Condition" : "AvailabilityZoneConA",
+            "Condition" : "SubnetConA",
             "Properties" : {
                 "VpcId" : { "Ref" : "VPC" },
                 "AvailabilityZone" : { "Ref": "AvailabilityZoneA" },
@@ -223,7 +221,7 @@
         },
         "WindowsSubnetB" : {
             "Type" : "AWS::EC2::Subnet",
-            "Condition" : "AvailabilityZoneConB",
+            "Condition" : "SubnetConB",
             "Properties" : {
                 "VpcId" : { "Ref" : "VPC" },
                 "AvailabilityZone" : { "Ref": "AvailabilityZoneB" },
@@ -237,7 +235,7 @@
         },
         "WindowsSubnetC" : {
             "Type" : "AWS::EC2::Subnet",
-            "Condition" : "AvailabilityZoneConC",
+            "Condition" : "SubnetConC",
             "Properties" : {
                 "VpcId" : { "Ref" : "VPC" },
                 "AvailabilityZone" : { "Ref": "AvailabilityZoneC" },
@@ -316,7 +314,7 @@
         "ElasticLoadBalancer" : {
             "Type" : "AWS::ElasticLoadBalancing::LoadBalancer",
             "Properties" : {
-                "Subnets": {"Fn::If" : ["AvailabilityZoneConC",
+                "Subnets": {"Fn::If" : ["SubnetConC",
                                             [ { "Ref" : "WindowsSubnetA" },{ "Ref" : "WindowsSubnetB" },{ "Ref" : "WindowsSubnetC" } ] ,
                                             [ { "Ref" : "WindowsSubnetA" },{ "Ref" : "WindowsSubnetB" } ]
                             ]},
